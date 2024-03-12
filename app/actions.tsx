@@ -18,6 +18,35 @@ export async function saveFeature(feature: Feature, formData: FormData) {
   revalidatePath("/");
 }
 
+export async function getFeatures() {
+  try {
+    let itemIds = await kv.zrange("items_by_score", 0, 100, {
+      rev: true,
+    });
+
+    if (!itemIds.length) {
+      return [];
+    }
+
+    let multi = kv.multi();
+    itemIds.forEach((id) => {
+      multi.hgetall(`item:${id}`);
+    });
+
+    let items: Feature[] = await multi.exec();
+    return items.map((item) => {
+      return {
+        ...item,
+        score: item.score,
+        created_at: item.created_at,
+      };
+    });
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
 export async function saveEmail(formData: FormData) {
   const email = formData.get("email");
 

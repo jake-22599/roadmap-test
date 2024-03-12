@@ -1,5 +1,4 @@
-import { kv } from "@vercel/kv";
-import { saveEmail } from "./actions";
+import { getFeatures, saveEmail } from "./actions";
 import FeatureForm from "./form";
 import { Feature } from "./types";
 
@@ -27,35 +26,6 @@ function VercelLogo(props: React.SVGProps<SVGSVGElement>) {
       />
     </svg>
   );
-}
-
-async function getFeatures() {
-  try {
-    let itemIds = await kv.zrange("items_by_score", 0, 100, {
-      rev: true,
-    });
-
-    if (!itemIds.length) {
-      return [];
-    }
-
-    let multi = kv.multi();
-    itemIds.forEach((id) => {
-      multi.hgetall(`item:${id}`);
-    });
-
-    let items: Feature[] = await multi.exec();
-    return items.map((item) => {
-      return {
-        ...item,
-        score: item.score,
-        created_at: item.created_at,
-      };
-    });
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
 }
 
 export default async function Page() {
